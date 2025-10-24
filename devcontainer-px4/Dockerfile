@@ -103,7 +103,7 @@ COPY dotfiles/.bashrc \
 
 # Make user 'qadt' own all files in home directory
 RUN chown -R qadt:qadt ${HOME_DIR} \
-	&& chmod +x ${HOME_DIR}/entrypoint.sh
+	&& chmod +x ${HOME_DIR}/entrypoint.sh 
 
 # Switch to user and run entry point
 USER qadt
