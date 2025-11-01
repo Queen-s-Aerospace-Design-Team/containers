@@ -52,7 +52,8 @@ RUN apt-get update \
 	vim \
 	tmux \
     # Put extra apt packages here for example:
-    # ros-humble-rmw-fastrtps-cpp \
+    '~nros-humble-rqt*' \
+	ros-humble-turtlesim \
     && rm -rf /var/lib/apt/lists/*
 
 # --------------------------
