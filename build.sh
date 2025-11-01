@@ -1,33 +1,69 @@
 #!/bin/bash
-
 set -euo pipefail
 
-# Usage: ./build.sh <folder>
-FOLDER=$1
-REGISTRY="ghcr.io"
-ORG="queen-s-aerospace-design-team"
-TAG="latest"
-PLATFORMS=("linux/amd64" "linux/arm64")
-GIT_USERNAME="$(git config --get user.name)"
+# Usage: ./build.sh <folder> [push|build]
 
-source .env # Obtain github cr token from .env file
+general()
+{
+    FOLDER=$1
+    ACTION=${2:-build} # optional second argument, defaults to "build"
 
-[[ -z "$FOLDER" ]] && { echo "Usage: $0 <folder-with-Dockerfile>"; exit 1; } # Must provide a folder
-[[ -f "$FOLDER/Dockerfile" ]] || { echo "Error: $FOLDER/Dockerfile not found"; exit 1; } # Folder must container dockerfile
+    GIT_USERNAME="$(git config --get user.name)"
+    REGISTRY="ghcr.io"
+    ORG="queen-s-aerospace-design-team"
+    TAG="latest"
+    PLATFORMS=("linux/amd64" "linux/arm64")
+    if [[ "$ACTION" == "push" ]]; then
+        TARGET_PLATFORMS="$(IFS=,; echo "${PLATFORMS[*]}")" # Use all platforms
+    else
+        TARGET_PLATFORMS="$(docker version -f '{{.Server.Os}}/{{.Server.Arch}}')" # Use host platform
+    fi
 
-BASE="$(basename "$FOLDER")"
-NAME="${BASE}"                              # strip optional 'qadt-' prefix
-REF="${REGISTRY}/${ORG}/${NAME}:${TAG}"
+    source .env # Obtain github cr token from .env file
 
-echo "Building ${REF} for "$(IFS=, ; echo "${PLATFORMS[*]}")" ... "
+    [[ -z "$FOLDER" ]] && { echo "Usage: $0 <folder-with-Dockerfile> [push]"; exit 1; }
+    [[ -f "$FOLDER/Dockerfile" ]] || { echo "Error: $FOLDER/Dockerfile not found"; exit 1; }
 
-echo $GHCR_TOKEN | docker login $REGISTRY -u '$GIT_USERNAME' --password-stdin
+    BASE="$(basename "$FOLDER")"
+    NAME="${BASE}"
+    REF="${REGISTRY}/${ORG}/${NAME}:${TAG}"
 
-export BUILDX_NO_DEFAULT_ATTESTATIONS=1 # Builds without default provenance
-docker buildx build \
-    --platform "$(IFS=,; echo "${PLATFORMS[*]}")" \
-    -t "${REF}" \
-    "${FOLDER}" \
-    --push
+    # --- Things to make sure buildx works ---
 
-echo "Pushed ${REF}"
+    if ! docker buildx ls | grep -q "multiarch-builder"; then
+        echo "Creating new multi-platform builder 'multiarch-builder'..."
+        docker buildx create --name multiarch-builder --driver docker-container --use
+        docker run --privileged --rm tonistiigi/binfmt --install all >/dev/null 2>&1 || true
+    else
+        docker buildx use multiarch-builder
+    fi
+
+    docker buildx inspect --bootstrap >/dev/null
+}
+
+build() 
+{
+    echo "Building ${REF} for $TARGET_PLATFORMS..."
+
+    export BUILDX_NO_DEFAULT_ATTESTATIONS=1 # Needed so we don't get a random unknown:unknown container
+
+    BUILD_CMD=(
+        docker buildx build
+        --platform "$TARGET_PLATFORMS"
+        -t "${REF}"
+        "${FOLDER}"
+    )
+
+    if [[ "$ACTION" == "push" ]]; then
+        # --- Login to GHCR in order to push container ---
+        echo "$GHCR_TOKEN" | docker login "$REGISTRY" -u "$GIT_USERNAME" --password-stdin
+        BUILD_CMD+=(--push)
+    else
+        BUILD_CMD+=(--load)
+    fi
+
+    "${BUILD_CMD[@]}"
+}
+
+general $@
+build
