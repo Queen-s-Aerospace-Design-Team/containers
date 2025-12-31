@@ -2,7 +2,6 @@
 # Base image & environment
 # --------------------------
 
-	
 FROM ros:humble
 	
 LABEL org.opencontainers.image.source = "https://github.com/Queen-s-Aerospace-Design-Team/containers"
@@ -34,6 +33,7 @@ RUN apt-get update \
 	gdb \
 	git \
 	clang \
+    clang-format \
 	lcov \
 	libssl-dev \
 	libxml2-dev \
@@ -47,13 +47,15 @@ RUN apt-get update \
 	python3-wheel \
 	rsync \
 	shellcheck \
-	unzip \
-	zip \
 	vim \
+    neovim \
 	tmux \
     # Put extra apt packages here for example:
     '~nros-humble-rqt*' \
 	ros-humble-turtlesim \
+    mesa-utils \
+    libgl1 \
+    libglx-mesa0 \
     && rm -rf /var/lib/apt/lists/*
 
 # --------------------------
@@ -74,12 +76,8 @@ RUN git clone --branch v2.4.3 https://github.com/eProsima/Micro-XRCE-DDS-Agent.g
 	&& rm -rf Micro-XRCE-DDS-Agent/build
 
 # Python dependencies in requirements.txt
-COPY px4_ubuntu.sh \
-	requirements.txt \
-	./
-
-RUN bash px4_ubuntu.sh \
-	&& pip3 install --no-cache-dir -r requirements.txt
+COPY px4_ubuntu.sh requirements.txt ./
+RUN chmod +x px4_ubuntu.sh && ./px4_ubuntu.sh
 
 # Run the setup and build for PX4
 RUN git clone --single-branch --branch v1.16.0 https://github.com/PX4/PX4-Autopilot.git --recursive --depth 1 \

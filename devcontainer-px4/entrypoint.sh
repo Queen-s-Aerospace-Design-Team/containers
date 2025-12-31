@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Exits cleanly if something fails
-set -e
+set -euo pipefail
 
-# To execute command you want
+MicroXRCEDDS udp4 -p 8888 >/dev/null 2>&1 &
+
 echo "==> Container ready"
 
 exec "$@"
