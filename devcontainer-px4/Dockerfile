@@ -2,7 +2,7 @@
 # Base image & environment
 # --------------------------
 
-FROM ros:humble
+FROM osrf/ros:humble-desktop
 	
 LABEL org.opencontainers.image.source = "https://github.com/Queen-s-Aerospace-Design-Team/containers"
 
