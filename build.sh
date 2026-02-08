@@ -4,13 +4,33 @@ set -euo pipefail
 # Usage: ./build.sh <folder> [push|local]
 # The image will look like this on github: ghcr.io/queen-s-aerospace-design-team/<folder>:latest
 
+use_orbstack_on_macos() {
+    if [[ "$(uname -s)" == "Darwin" ]]; then
+        # OrbStack creates a Docker context called "orbstack"
+        if docker context inspect orbstack >/dev/null 2>&1; then
+            local current="$(docker context show 2>/dev/null || true)"
+
+            if [[ "$current" != "orbstack" ]]; then
+                echo "Switching Docker context to 'orbstack'..."
+                docker context use orbstack >/dev/null
+            fi
+        else
+            echo "Error: Docker context 'orbstack' not found."
+            echo "Install/launch OrbStack, then run: docker context use orbstack"
+            exit 1
+        fi
+    fi
+}
+
 general() {
+    use_orbstack_on_macos
+
     source .env # Expects GH Token
 
     FOLDER=$1
     ACTION=${2:-local} # Action defaults to local builds
 
-    [[ -z "$FOLDER" ]] && { echo "Usage: $0 <folder-with-Dockerfile> [push|local]"; exit 1; }
+    [[ -z "${FOLDER:-}" ]] && { echo "Usage: $0 <folder-with-Dockerfile> [push|local]"; exit 1; }
     [[ -f "$FOLDER/Dockerfile" ]] || { echo "Error: $FOLDER/Dockerfile not found"; exit 1; }
 
     GIT_USERNAME="$(git config --get user.name)"
@@ -19,15 +39,15 @@ general() {
     PLATFORMS=("linux/amd64" "linux/arm64")
     NAME="$(basename "$FOLDER")"
 
-    CACHE_IMAGE="${REGISTRY}/${ORG}/${NAME}:buildcache" # Cache the image on the remote as well (GitHub Registry)
-    CACHE_FROM_ARGS=( --cache-from=type=registry,ref="${CACHE_IMAGE}" ) # By default, pull cache from remote registry
-    CACHE_TO_ARGS=( --cache-to=type=registry,ref="${CACHE_IMAGE}",mode=max ) # Upload to registry cache only when a GitHub Token is provided (otherwise you can't run 'docker buildx build ... --push')
+    CACHE_IMAGE="${REGISTRY}/${ORG}/${NAME}:buildcache"
+    CACHE_FROM_ARGS=( --cache-from=type=registry,ref="${CACHE_IMAGE}" )
+    CACHE_TO_ARGS=( --cache-to=type=registry,ref="${CACHE_IMAGE}",mode=max )
 
     if [[ "$ACTION" == "push" ]]; then
-        TARGET_PLATFORMS="$(IFS=,; echo "${PLATFORMS[*]}")"   # multi-arch for pushes
+        TARGET_PLATFORMS="$(IFS=,; echo "${PLATFORMS[*]}")"
         TAG="latest"
     else
-        TARGET_PLATFORMS="$(docker version -f '{{.Server.Os}}/{{.Server.Arch}}')"  # host arch
+        TARGET_PLATFORMS="$(docker version -f '{{.Server.Os}}/{{.Server.Arch}}')"
         TAG="local"
     fi
 
@@ -53,7 +73,6 @@ ensure_builder() {
 }
 
 maybe_login_to_registry() {
-    # Login only if a token is provided
     if [[ -n "${GHCR_TOKEN:-}" ]]; then
         echo "$GHCR_TOKEN" | docker login "$REGISTRY" -u "$GIT_USERNAME" --password-stdin
     fi
@@ -62,11 +81,10 @@ maybe_login_to_registry() {
 build() {
     echo "Building ${REF} for $TARGET_PLATFORMS..."
     export BUILDX_NO_DEFAULT_ATTESTATIONS=1
-    
+
     ensure_builder
 
     if [[ "$ACTION" == "push" ]]; then
-        # Pushing the image requires auth; fail fast if missing
         if [[ -z "${GHCR_TOKEN:-}" ]]; then
             echo "Error: GHCR_TOKEN is required to push '${REF}'. Perform a local build instead or provide a token."
             exit 1
@@ -82,7 +100,6 @@ build() {
             "${CACHE_TO_ARGS[@]}" \
             "${FOLDER}"
     else
-        # Local single-arch build that still benefits from local cache
         docker buildx build \
             --platform "$TARGET_PLATFORMS" \
             -t "${REF}" \

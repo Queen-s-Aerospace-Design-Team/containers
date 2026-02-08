@@ -4,7 +4,7 @@
 
 FROM osrf/ros:humble-desktop
 	
-LABEL org.opencontainers.image.source = "https://github.com/Queen-s-Aerospace-Design-Team/containers"
+LABEL org.opencontainers.image.source="https://github.com/Queen-s-Aerospace-Design-Team/containers"
 
 ENV ROS_DISTRO=humble \
 	DEBIAN_FRONTEND=noninteractive  \
@@ -18,8 +18,7 @@ SHELL ["/bin/bash", "-c"]
 # --------------------------
 
 # Update and install necessary dependencies
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y \
     wget \
 	curl \
     astyle \
@@ -50,12 +49,6 @@ RUN apt-get update \
 	vim \
     neovim \
 	tmux \
-    # Put extra apt packages here for example:
-    '~nros-humble-rqt*' \
-	ros-humble-turtlesim \
-    mesa-utils \
-    libgl1 \
-    libglx-mesa0 \
     && rm -rf /var/lib/apt/lists/*
 
 # --------------------------
@@ -80,8 +73,21 @@ COPY px4_ubuntu.sh requirements.txt ./
 RUN chmod +x px4_ubuntu.sh && ./px4_ubuntu.sh
 
 # Run the setup and build for PX4
-RUN git clone --single-branch --branch v1.16.0 https://github.com/PX4/PX4-Autopilot.git --recursive --depth 1 \
+RUN git clone --single-branch --branch v1.16.1 https://github.com/PX4/PX4-Autopilot.git --recursive --depth 1 \
 	&& make -C PX4-Autopilot
+
+ # Put extra apt packages here:
+RUN apt-get update && apt-get install -y \
+    '~nros-humble-rqt*' \
+	ros-humble-turtlesim \
+    ros-humble-navigation2 \
+    ros-humble-nav2-bringup \
+    ros-humble-ros-gzharmonic \
+    ros-humble-topic-tools \
+    mesa-utils \
+    libgl1 \
+    libglx-mesa0 \
+    && rm -rf /var/lib/apt/lists/*
 
 # --------------------------
 # Entrypoint and User
@@ -90,10 +96,10 @@ RUN git clone --single-branch --branch v1.16.0 https://github.com/PX4/PX4-Autopi
 # Add new user 'qadt'
 RUN useradd -ms /bin/bash qadt && \
     echo "qadt:aero" | chpasswd && \
-    usermod -aG sudo qadt 
+    usermod -aG sudo qadt \
 	# Uncomment if you want sudo access without a password
-	# && echo "qadt ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/qadt \
-    # && chmod 0440 /etc/sudoers.d/qadt
+	&& echo "qadt ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/qadt \
+    && chmod 0440 /etc/sudoers.d/qadt
 	
 # Copy necessary files from the dockerfile's directory into the container
 COPY dotfiles/.bashrc \
