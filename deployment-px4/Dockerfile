@@ -73,6 +73,10 @@ RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
 
 WORKDIR ${HOME_DIR}
 
+# Python dependencies for google drive uploading. After all pip installs, remove pip cache
+RUN pip install --no-cache-dir google-auth google-api-python-client \
+    && pip cache purge
+
 # Copy necessary files from the dockerfile's directory into the container
 COPY dotfiles/.bashrc \
 	dotfiles/.profile \
@@ -95,4 +99,6 @@ RUN chown -R ${USER}:${USER} ${HOME_DIR} \
 # Finalize
 USER ${USER}
 ENTRYPOINT [ "/home/qadt-deployment/entrypoint.sh" ]
-CMD [ "bash" ]
+
+# We do not launch with a command as it could cause crashes. 
+# Instead, it is provided under the compose profile we launch into it with.

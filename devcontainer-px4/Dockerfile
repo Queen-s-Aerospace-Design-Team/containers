@@ -49,6 +49,16 @@ RUN apt-get update && apt-get install -y \
 	vim \
     neovim \
 	tmux \
+    # Extra ros installs
+    '~nros-humble-rqt*' \
+	ros-humble-turtlesim \
+    ros-humble-navigation2 \
+    ros-humble-nav2-bringup \
+    ros-humble-ros-gz \
+    ros-humble-topic-tools \
+    mesa-utils \
+    libgl1 \
+    libglx-mesa0 \
     && rm -rf /var/lib/apt/lists/*
 
 # --------------------------
@@ -76,18 +86,9 @@ RUN chmod +x px4_ubuntu.sh && ./px4_ubuntu.sh
 RUN git clone --single-branch --branch v1.16.1 https://github.com/PX4/PX4-Autopilot.git --recursive --depth 1 \
 	&& make -C PX4-Autopilot
 
- # Put extra apt packages here:
-RUN apt-get update && apt-get install -y \
-    '~nros-humble-rqt*' \
-	ros-humble-turtlesim \
-    ros-humble-navigation2 \
-    ros-humble-nav2-bringup \
-    ros-humble-ros-gzharmonic \
-    ros-humble-topic-tools \
-    mesa-utils \
-    libgl1 \
-    libglx-mesa0 \
-    && rm -rf /var/lib/apt/lists/*
+# Python dependencies for google drive uploading. After all pip installs, remove pip cache
+RUN pip install --no-cache-dir google-auth google-api-python-client \
+    && pip cache purge
 
 # --------------------------
 # Entrypoint and User

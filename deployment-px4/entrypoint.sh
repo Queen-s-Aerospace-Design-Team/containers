@@ -12,7 +12,7 @@ runMicroXRCEAgent() {
 }
 
 hasRepoConnection() {
-    git -C "${REPO_ROOT}" ls-remote --exit-code origin >/dev/null 2>&1
+    GIT_TERMINAL_PROMPT=0 timeout 5 git -C "${REPO_ROOT}" ls-remote --exit-code origin >/dev/null 2>&1
 }
 
 fetchAndBuild() {
@@ -32,8 +32,14 @@ fetchAndBuild() {
 
 fetchAndBuild
 runMicroXRCEAgent &
+XRCE_PID=$!
 
 sleep 1
 
-echo "==> Launching main process: $*"
-exec "$@"
+if [ "$#" -gt 0 ]; then
+    echo "==> Launching main process: $*"
+    exec "$@"
+else
+    echo "==> No main process specified; keeping container alive with MicroXRCEAgent"
+    wait "${XRCE_PID}"
+fi
