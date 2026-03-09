@@ -79,6 +79,8 @@ if [ -x /usr/bin/dircolors ]; then
     #alias dir='dir --color=auto'
     #alias vdir='vdir --color=auto'
 
+    alias sros='source install/setup.sh'
+
     alias grep='grep --color=auto'
     alias fgrep='fgrep --color=auto'
     alias egrep='egrep --color=auto'
@@ -120,8 +122,6 @@ fi
 
 export PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@container\[\033[00m\]\[\033[01;37m\]:\[\033[01;34m\]\w\[\033[00m\]\[\033[01;37m\]\$ \[\033[00m\]'
 
-export PATH="$PATH:$HOME/Micro-XRCE-DDS-Gen/scripts"
-
 # ROS environment, colcon_cd and argcomplete, and colcon argcomplete setup.
 # NOTE: This will only work with bash shells. If you are using ZSH shell, 
 # replace the '.bash' with '.zsh'.
@@ -130,3 +130,10 @@ source /usr/share/colcon_cd/function/colcon_cd-argcomplete.bash
 source /usr/share/colcon_cd/function/colcon_cd.sh
 export _colcon_cd_root=$HOME
 source /usr/share/colcon_argcomplete/hook/colcon-argcomplete.bash
+
+# argcomplete for ros2 & colcon. THESE ARE VERY NICE TO HAVE :D
+eval "$(register-python-argcomplete3 ros2)"
+eval "$(register-python-argcomplete3 colcon)"
+
+# ----- END ----- (keep some empty lines at the end of this file)
+

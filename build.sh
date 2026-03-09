@@ -25,10 +25,12 @@ use_orbstack_on_macos() {
 general() {
     use_orbstack_on_macos
 
-    source .env # Expects GH Token
-
     FOLDER=$1
     ACTION=${2:-local} # Action defaults to local builds
+
+    if [[ $ACTION == "push" ]]; then
+        source .env # Expects GH Token
+    fi
 
     [[ -z "${FOLDER:-}" ]] && { echo "Usage: $0 <folder-with-Dockerfile> [push|local]"; exit 1; }
     [[ -f "$FOLDER/Dockerfile" ]] || { echo "Error: $FOLDER/Dockerfile not found"; exit 1; }

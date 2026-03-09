@@ -24,6 +24,24 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxml2-dev \
     libxml2-utils \
     tmux \
+    wget \
+    curl \
+    build-essential \
+    cmake \
+    ninja-build \
+    ca-certificates \
+    gnupg \
+    build-essential \
+    ccache \
+    git \
+    shellcheck \
+    cppcheck \
+    astyle \
+    file \
+    rsync \
+    unzip \
+    zip \
+    vim \
 	# For XRCE-DDS Gen
 	default-jre \
     # Clear cache
