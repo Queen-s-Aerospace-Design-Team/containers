@@ -84,9 +84,9 @@ build() {
     echo "Building ${REF} for $TARGET_PLATFORMS..."
     export BUILDX_NO_DEFAULT_ATTESTATIONS=1
 
-    ensure_builder
-
     if [[ "$ACTION" == "push" ]]; then
+        ensure_builder
+
         if [[ -z "${GHCR_TOKEN:-}" ]]; then
             echo "Error: GHCR_TOKEN is required to push '${REF}'. Perform a local build instead or provide a token."
             exit 1
