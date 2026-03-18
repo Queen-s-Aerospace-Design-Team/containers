@@ -4,12 +4,6 @@ set -euo pipefail
 
 WORKSPACE="${HOME}/AEAC2026/ros_ws"
 REPO_ROOT="${HOME}/AEAC2026"
-XRCE_PORT="8888"
-
-runMicroXRCEAgent() {
-    echo "==> Starting MicroXRCEAgent on UDP port ${XRCE_PORT}"
-    MicroXRCEAgent udp4 -p "${XRCE_PORT}" >/dev/null 2>&1
-}
 
 hasRepoConnection() {
     GIT_TERMINAL_PROMPT=0 timeout 5 git -C "${REPO_ROOT}" ls-remote --exit-code origin >/dev/null 2>&1
@@ -31,15 +25,10 @@ fetchAndBuild() {
 }
 
 fetchAndBuild
-runMicroXRCEAgent &
-XRCE_PID=$!
-
-sleep 1
 
 if [ "$#" -gt 0 ]; then
     echo "==> Launching main process: $*"
     exec "$@"
 else
-    echo "==> No main process specified; keeping container alive with MicroXRCEAgent"
-    wait "${XRCE_PID}"
+    echo "==> No main process provided. Exiting..."
 fi
