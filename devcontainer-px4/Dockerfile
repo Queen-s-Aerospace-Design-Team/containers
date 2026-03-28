@@ -86,8 +86,8 @@ RUN chmod +x px4_ubuntu.sh \
 RUN git clone --single-branch --branch v1.16.1 https://github.com/PX4/PX4-Autopilot.git --recursive --depth 1 \
 	&& make -C PX4-Autopilot
 
-# Python dependencies for google drive uploading. 
-RUN pip install --no-cache-dir google-auth google-api-python-client
+# Python dependencies for google drive uploading and Jetson GPIO
+RUN pip install --no-cache-dir google-auth google-api-python-client Jeton.GPIO
 
 # --------------------------
 # Entrypoint and User

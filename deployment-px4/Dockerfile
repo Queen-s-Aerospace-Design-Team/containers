@@ -46,11 +46,17 @@ RUN git clone --branch v2.4.3 https://github.com/eProsima/Micro-XRCE-DDS-Agent.g
     && ldconfig \
 	&& rm -rf Micro-XRCE-DDS-Agent
 
+# Python dependencies for google drive uploading and Jetson GPIO
+RUN pip install --no-cache-dir google-auth google-api-python-client Jetson.GPIO
+
+# -- Repo Clone & Build (last build layer) --
+
 # Clone repo
 RUN git clone --branch main --depth 1 --recurse-submodules https://github.com/Queen-s-Aerospace-Design-Team/AEAC2026.git
 
 # Run rosdep install
-RUN cd ${HOME_DIR}/AEAC2026/ros_ws \
+RUN apt-get update \
+    && cd ${HOME_DIR}/AEAC2026/ros_ws \
     && source /opt/ros/${ROS_DISTRO}/setup.bash \
     && rosdep install --from-paths src --ignore-src -y --rosdistro=${ROS_DISTRO} \
     && rm -rf /var/lib/apt/lists/*
@@ -59,9 +65,6 @@ RUN cd ${HOME_DIR}/AEAC2026/ros_ws \
 RUN cd ${HOME_DIR}/AEAC2026/ros_ws \
     && source /opt/ros/${ROS_DISTRO}/setup.bash \
     && colcon build --symlink-install --base-paths src
-
-# Python dependencies for google drive uploading
-RUN pip install --no-cache-dir google-auth google-api-python-client
 
 # Copy necessary files from the dockerfile's directory into the container
 COPY dotfiles/.bashrc \
