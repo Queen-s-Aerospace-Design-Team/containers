@@ -9,7 +9,7 @@ LABEL org.opencontainers.image.source="https://github.com/Queen-s-Aerospace-Desi
 ENV ROS_DISTRO=humble \
 	DEBIAN_FRONTEND=noninteractive  \
 	HOME_DIR=/home/qadt-dev \
-    USER=qadt-dev
+    USERNAME=qadt-dev
 
 SHELL ["/bin/bash", "-c"] 
 
@@ -87,7 +87,11 @@ RUN git clone --single-branch --branch v1.16.1 https://github.com/PX4/PX4-Autopi
 	&& make -C PX4-Autopilot
 
 # Python dependencies for google drive uploading and Jetson GPIO
-RUN pip install --no-cache-dir google-auth google-api-python-client Jeton.GPIO
+RUN pip install --no-cache-dir \
+    google-auth \
+    google-auth-oauthlib \
+    google-api-python-client \
+    Jetson.GPIO
 
 # --------------------------
 # Entrypoint and User
@@ -102,17 +106,17 @@ COPY dotfiles/.bashrc \
 	./
 
 # Add new user with sudo access without needing password
-RUN useradd -ms /bin/bash ${USER} && \
-    echo "${USER}:aero" | chpasswd && \
-    usermod -aG sudo ${USER} \
-	&& echo "${USER} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${USER} \
-    && chmod 0440 /etc/sudoers.d/${USER}
+RUN useradd -ms /bin/bash ${USERNAME} && \
+    echo "${USERNAME}:aero" | chpasswd && \
+    usermod -aG sudo ${USERNAME} \
+	&& echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${USERNAME} \
+    && chmod 0440 /etc/sudoers.d/${USERNAME}
 
 # Make user own all files in home directory
-RUN chown -R ${USER}:${USER} ${HOME_DIR} \
+RUN chown -R ${USERNAME}:${USERNAME} ${HOME_DIR} \
 	&& chmod +x ${HOME_DIR}/entrypoint.sh 
 
 # Finalize
-USER ${USER}
+USER ${USERNAME}
 ENTRYPOINT [ "/home/qadt-dev/entrypoint.sh" ]
 CMD [ "bash" ]

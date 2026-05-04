@@ -9,7 +9,7 @@ LABEL org.opencontainers.image.source="https://github.com/Queen-s-Aerospace-Desi
 ENV ROS_DISTRO=humble \
     DEBIAN_FRONTEND=noninteractive \
     HOME_DIR=/home/qadt-deploy \
-    USER=qadt-deploy
+    USERNAME=qadt-deploy
 
 SHELL ["/bin/bash", "-c"]
 
@@ -47,9 +47,13 @@ RUN git clone --branch v2.4.3 https://github.com/eProsima/Micro-XRCE-DDS-Agent.g
 	&& rm -rf Micro-XRCE-DDS-Agent
 
 # Python dependencies for google drive uploading and Jetson GPIO
-RUN pip install --no-cache-dir google-auth google-api-python-client Jetson.GPIO
+RUN pip install --no-cache-dir \
+    google-auth \
+    google-auth-oauthlib \
+    google-api-python-client \
+    Jetson.GPIO
 
-# -- Repo Clone & Build (last build layer) --
+# -- Repo Clone & Build --
 
 # Clone repo
 RUN git clone --branch main --depth 1 --recurse-submodules https://github.com/Queen-s-Aerospace-Design-Team/AEAC2026.git
@@ -75,18 +79,18 @@ COPY dotfiles/.bashrc \
 	./
 
 # Add new user with sudo access without needing password
-RUN useradd -ms /bin/bash ${USER} && \
-    echo "${USER}:aero" | chpasswd && \
-    usermod -aG sudo ${USER} \
-	&& echo "${USER} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${USER} \
-    && chmod 0440 /etc/sudoers.d/${USER}
+RUN useradd -ms /bin/bash ${USERNAME} && \
+    echo "${USERNAME}:aero" | chpasswd && \
+    usermod -aG sudo ${USERNAME} \
+	&& echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${USERNAME} \
+    && chmod 0440 /etc/sudoers.d/${USERNAME}
 
 # Make user own all files in home directory
-RUN chown -R ${USER}:${USER} ${HOME_DIR} \
+RUN chown -R ${USERNAME}:${USERNAME} ${HOME_DIR} \
 	&& chmod +x ${HOME_DIR}/entrypoint.sh 
 
 # Finalize
-USER ${USER}
+USER ${USERNAME}
 ENTRYPOINT [ "/home/qadt-deploy/entrypoint.sh" ]
 
 # We do not launch with a command as it could cause crashes. 
