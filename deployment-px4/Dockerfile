@@ -55,11 +55,9 @@ RUN pip install --no-cache-dir \
 
 # -- Repo Clone & Build --
 
-# Clone repo
-RUN git clone --branch main --depth 1 --recurse-submodules https://github.com/Queen-s-Aerospace-Design-Team/AEAC2026.git
-
-# Run rosdep install
-RUN apt-get update \
+# Clone repo and run rosdep install
+RUN git clone --branch main --depth 1 --recurse-submodules https://github.com/Queen-s-Aerospace-Design-Team/AEAC2026.git \
+    && apt-get update \
     && cd ${HOME_DIR}/AEAC2026/ros_ws \
     && source /opt/ros/${ROS_DISTRO}/setup.bash \
     && rosdep install --from-paths src --ignore-src -y --rosdistro=${ROS_DISTRO} \
